@@ -56,6 +56,13 @@ class CheckBanner < Sensu::Plugin::Check::CLI
          proc: proc(&:to_i),
          default: 22
 
+  option :udp,
+         short: '-u',
+         long: '--udp',
+         description: 'Use UDP protocol instead of TCP',
+         boolean: true,
+         default: false
+
   option :write,
          short: '-w STRING',
          long: '--write STRING',
@@ -110,7 +117,11 @@ class CheckBanner < Sensu::Plugin::Check::CLI
 
   def acquire_banner(host)
     Timeout.timeout(config[:timeout]) do
-      sock = TCPSocket.new(host, config[:port])
+      if config[:udp]
+        sock = UDPSocket.new
+        sock.connect(host, config[:port])
+      else
+        sock = TCPSocket.new(host, config[:port])
 
       if config[:ssl]
         ssl_context = OpenSSL::SSL::SSLContext.new
@@ -140,7 +151,12 @@ class CheckBanner < Sensu::Plugin::Check::CLI
 
   def acquire_no_banner(host)
     Timeout.timeout(config[:timeout]) do
-      TCPSocket.new(host, config[:port])
+      if config[:udp]
+        sock = UDPSocket.new
+        sock.connect(host, config[:port])
+      else
+        TCPSocket.new(host, config[:port])
+      end
     end
   rescue Errno::ECONNREFUSED
     critical "Connection refused by #{host}:#{config[:port]}"
