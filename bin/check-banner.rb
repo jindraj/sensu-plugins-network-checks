@@ -122,6 +122,7 @@ class CheckBanner < Sensu::Plugin::Check::CLI
         sock.connect(host, config[:port])
       else
         sock = TCPSocket.new(host, config[:port])
+      end
 
       if config[:ssl]
         ssl_context = OpenSSL::SSL::SSLContext.new
